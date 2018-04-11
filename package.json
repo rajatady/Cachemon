@@ -13,7 +13,7 @@
     "redis-cache"
   ],
   "author": "Kumar Divya Rajat <rajat.ady@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "bluebird": "^3.5.1",
     "redis": "^2.8.0"
