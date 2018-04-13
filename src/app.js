@@ -1,38 +1,48 @@
-import {initClient} from './client';
 import * as redis from 'redis';
 import bluebird from 'bluebird';
-
-let client;
+// import cacheMonClient from "./client";
+let cacheMonClient;
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
 
 export const initialize = (config) => {
-    return initClient(config);
-};
+    return new Promise((resolve, reject) => {
 
-export const test = () => {
-    client.setAsync('my test key', 'my test value1')
-        .then(res => console.log(res));
-
-
-    client.getAsync('my test key')
-        .then(result => {
-            console.log('GET result -> ' + result);
-        })
-        .catch(error => {
-            console.log(error);
-            throw error;
+        let _client = cacheMonClient = redis.createClient(config);
+        _client.on('connect', () => {
+            console.log('Redis client connected');
+            resolve(_client);
         });
 
-    client.hset(["hash key", "hashtest", "some other value"]);
+        _client.on('error', (err) => {
+            reject(err);
+        });
+    });
 };
 
-initialize()
-    .then(cli => {
-        client = cli;
-        test();
-    })
-    .catch(err => {
-        console.log(err);
-    });
+
+export const test = () => {
+    try {
+        cacheMonClient.setAsync('my test key', 'my test value1')
+            .then(res => console.log(res));
+
+
+        cacheMonClient.getAsync('my test key')
+            .then(result => {
+                console.log('GET result -> ' + result);
+            })
+            .catch(error => {
+                console.log(error);
+                throw error;
+            });
+
+        cacheMonClient.hset(["hash key", "hashtest", "some other value"]);
+    } catch (e) {
+        console.log(e);
+    }
+
+};
+
+
+export default cacheMonClient;

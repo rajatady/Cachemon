@@ -1,2 +1,2 @@
 require("babel-core/register");
-require("./app.js");
+exports = module.exports = require('./app');
