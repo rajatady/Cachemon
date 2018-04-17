@@ -12,7 +12,7 @@ bluebird.promisifyAll(redis.Multi.prototype);
 const config = [];
 
 /**
- *
+ * @alias module:Cachemon
  * @param config
  * @returns {Promise<any>}
  */
@@ -44,7 +44,7 @@ export const initialize = (config) => {
 
 
 /**
- *
+ * @alias module:Cachemon
  * @param clientConfig
  * @returns {CacheMonClient}
  */
@@ -55,7 +55,7 @@ export const resource = (clientConfig) => {
 
 
 /**
- *
+ * @alias module:Cachemon
  * @private
  */
 const _connectInstances = () => {
@@ -66,7 +66,7 @@ const _connectInstances = () => {
 };
 
 /**
- *
+ * @alias module:Cachemon
  * @param url
  * @param {CacheMonClient} cacheModel
  * @returns Promise
@@ -88,7 +88,7 @@ export const hasKey = (url, cacheModel) => {
 };
 
 /**
- *
+ * @alias module:Cachemon
  * @param {CacheMonClient} cacheModel
  * @returns {Function}
  */
@@ -109,7 +109,7 @@ export const cacheMiddleware = (cacheModel) => (req, res, next) => {
 };
 
 /**
- *
+ * @alias module:Cachemon
  * @param resourceName
  * @returns {*}
  */
@@ -118,7 +118,7 @@ export const getResource = (resourceName) => {
 };
 
 /**
- *
+ * @alias module:Cachemon
  * @param str
  * @returns {*|PromiseLike<ArrayBuffer>}
  */
@@ -126,4 +126,7 @@ const generateHash = (str) => {
     return crypto.createHash('md5').update(str).digest('hex')
 };
 
+/**
+ * @module Cachemon
+ */
 export default CacheMonClient;

@@ -10,7 +10,43 @@ bluebird.promisifyAll(redis.Multi.prototype);
 /**
  * @class CacheMonClient
  * @extends EventEmitter
- *
+ * @example
+ * const cnrCache = new CacheMonClient({
+        name: 'DATA',
+        executeCronJob: false,
+        cronPeriod: '0 * * * * *',
+        cronExecutorFn: (done) => {
+            i++;
+            console.log('Running');
+            request({
+                url: 'https://api.github.com/users/rajatady/repos?per_page=10',
+                headers: {
+                    'User-Agent': 'request'
+                }
+            }, (err, response, body) => {
+                if (err) {
+                    done();
+                } else {
+                    cnrCache.updateResourcePool(body)
+                        .then(res => {
+                            console.log('Done');
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        })
+                }
+            });
+        },
+        requestMethod: 'GET',
+        urlDomain: '/data'
+    });
+
+
+ cnrCache.on('updated', (data) => {
+        console.log('Updated');
+    });
+
+ export default resource(cnrCache);
  */
 export default class CacheMonClient extends EventEmitter {
     _instance;
@@ -24,14 +60,15 @@ export default class CacheMonClient extends EventEmitter {
 
     /**
      *
+     * @constructor Create a Cachemon client
      * @param {Object} options  The options for the Cachemon Client
      * @param {String}  options.name The name of the client for which resources have to be scoped
-     * @param {String} [options.allowFiltering]
-     * @param {String} options.urlDomain
-     * @param {String} [options.requestMethod=GET]
-     * @param {String} [options.cronPeriod]
-     * @param {Boolean} [options.executeCronJob]
-     * @param {Function} [options.cronExecutorFn]
+     * @param {String} [options.allowFiltering] Whether the domain should allow data filtering (Planned)
+     * @param {String} options.urlDomain The url domain registered with express. To be used for advanced caching (Planned)
+     * @param {String} [options.requestMethod=GET] The HTTP request method for the url domain (Planned)
+     * @param {String} [options.cronPeriod] The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
+     * @param {Boolean} [options.executeCronJob] Should the cron function be executed
+     * @param {Function} [options.cronExecutorFn] The function to be executed whenever the cron job runs
      */
     constructor(options) {
         super();
@@ -98,9 +135,10 @@ export default class CacheMonClient extends EventEmitter {
 
     /**
      *
-     * @param key
-     * @param value
-     * @returns {*}
+     * @description Set some data in the resource. The key will be prefixed with the resource name specified earlier
+     * @param key {String} The key to be put in the cache
+     * @param value {String} The data to be saved
+     * @returns {Promise<any>}
      */
     setData(key, value) {
         if (key.url) {
@@ -112,16 +150,18 @@ export default class CacheMonClient extends EventEmitter {
 
     /**
      *
-     * @param key
+     * @description Get some data from the resource. The key will be prefixed with the resource name specified earlier
+     * @param key {String} The key to fetch from the cache
+     * @returns {Promise<any>}
      */
     getData(key) {
         return this._instance.getAsync(this.name + '_' + key);
     }
 
     /**
-     *
-     * @param resourcePoolData
-     * @returns {*}
+     * @description Sets the data in the resource pool
+     * @param resourcePoolData {String} Set the data in the resource pool
+     * @returns {Promise<any>}
      */
     setResourcePool(resourcePoolData) {
         return new Promise((resolve, reject) => {
@@ -132,8 +172,8 @@ export default class CacheMonClient extends EventEmitter {
     }
 
     /**
-     *
-     * @returns {*}
+     * @description Get the data from the resource pool
+     * @returns {Promise<any>}
      */
     getResourcePool() {
         return this._instance.getAsync(this.name);
