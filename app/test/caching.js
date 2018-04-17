@@ -1,13 +1,13 @@
 import CacheMonClient, {resource} from "../../src";
 
 const cnrCache = new CacheMonClient({
-    executeCronJob: true,
+    name: 'CNR',
+    executeCronJob: false,
     cronExecutor: () => {
 
     },
     requestMethod: 'GET',
-    urlDomain: '/test',
-    allowFiltering: true
+    urlDomain: '/test'
 });
 
-export default resource(cnrCache, 'CNR');
+export default resource(cnrCache);

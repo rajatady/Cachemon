@@ -1,11 +1,10 @@
 import * as redis from 'redis';
 import bluebird from 'bluebird';
-
-let cacheMonClient;
 import _ from 'lodash';
 import CacheMonClient from "./client";
 import crypto from 'crypto';
-import _ from 'lodash';
+
+let cacheMonClient;
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
@@ -17,25 +16,6 @@ const config = [];
  * @param config
  * @returns {Promise<any>}
  */
-
-export const getClient = (options) => {
-    return new Client(options, cacheMonClient);
-};
-
-export const hasKey = (key) => {
-    return new Promise((resolve, reject) => {
-        cacheMonClient.keysAsync('*')
-            .then(keys => {
-                let hashedKey = generateHash(key);
-                resolve(_.findIndex(keys, o => o === hashedKey) !== -1);
-            })
-            .catch(err => {
-                console.warn('Error while finding keys:', err);
-                reject()
-            })
-    })
-};
-
 export const initialize = (config) => {
     return new Promise((resolve, reject) => {
 
@@ -62,36 +42,49 @@ export const initialize = (config) => {
     });
 };
 
+
 /**
  *
  * @param clientConfig
- * @param resourceName
- * @returns {*}
+ * @returns {CacheMonClient}
  */
-export const resource = (clientConfig, resourceName) => {
-    config.push({
-        name: resourceName,
-        cachemonClient: clientConfig
-    });
-    return getResource(resourceName);
-};
-export const set = (req, value) => {
-    let hashedKey = generateHash(req.url);
-    console.log('Setting VALUE', hashedKey);
-    return cacheMonClient.setAsync(hashedKey, value)
+export const resource = (clientConfig) => {
+    config.push(clientConfig);
+    return clientConfig;
 };
 
 
+/**
+ *
+ * @private
+ */
 const _connectInstances = () => {
     console.log('Connecting instances');
     config.forEach(o => {
-        o.cachemonClient.client = cacheMonClient;
-        o.cachemonClient.prefix = o.name;
+        o.client = cacheMonClient;
     });
 };
-export const get = (req) => {
-    let hashedKey = generateHash(req.url);
-    return cacheMonClient.getAsync(hashedKey)
+
+/**
+ *
+ * @param url
+ * @param {CacheMonClient} cacheModel
+ * @returns Promise
+ */
+export const hasKey = (url, cacheModel) => {
+    return new Promise((resolve, reject) => {
+        cacheModel._instance.keysAsync('*')
+            .then(keys => {
+                console.log(keys);
+                let hashedKey = cacheModel.name + '_' + generateHash(url);
+                console.log('Hashed Key : ', hashedKey);
+                resolve(_.findIndex(keys, o => o === hashedKey) !== -1);
+            })
+            .catch(err => {
+                console.warn('Error while finding keys:', err);
+                reject()
+            })
+    })
 };
 
 /**
@@ -100,30 +93,19 @@ export const get = (req) => {
  * @returns {Function}
  */
 export const cacheMiddleware = (cacheModel) => (req, res, next) => {
-    if (cacheModel.allowFiltering) {
-
-    }
-    next();
-};
-
-export const cachedRouteMiddleware = (req, res, next) => {
-    hasKey(req.url)
-        .then((isPresent) => {
-            if (isPresent) {
-                get(req)
-                    .then(result => {
-                        console.log('Serving from cache');
-                        res.json(JSON.parse(result))
-                    })
-                    .catch(err => {
-                        console.log('Error from cache : ', req.url);
-                        next(err)
-                    })
+    cacheModel.getData(generateHash(req.url))
+        .then((data) => {
+            if (data) {
+                console.log('Serving from cache');
+                res.json(JSON.parse(data))
             } else {
                 next();
             }
         })
-        .catch(err => next())
+        .catch(err => {
+            console.warn(err);
+            next();
+        })
 };
 
 /**
@@ -133,7 +115,13 @@ export const cachedRouteMiddleware = (req, res, next) => {
  */
 export const getResource = (resourceName) => {
     return _.find(config, o => o.name === resourceName);
+};
 
+/**
+ *
+ * @param str
+ * @returns {*|PromiseLike<ArrayBuffer>}
+ */
 const generateHash = (str) => {
     return crypto.createHash('md5').update(str).digest('hex')
 };

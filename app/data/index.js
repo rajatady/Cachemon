@@ -11,6 +11,7 @@ const handler = (req, res) => {
     CNRCacheModel.getResourcePool()
         .then(data => {
             if (data) {
+                console.log('Cache Hit');
                 return data;
             } else {
                 return extData();
@@ -24,21 +25,28 @@ const handler = (req, res) => {
             }
         })
         .then(data => {
+            if (typeof data === 'string') {
+                data = JSON.parse(data);
+            }
+            if (req.query.name) {
+                data = data.filter(o => o.name === req.query.name)
+            }
             gData = data;
-            return CNRCacheModel.setData(req, data)
+            return CNRCacheModel.setData(req, JSON.stringify(data))
         })
         .then(() => {
-            res.json(JSON.parse(gData));
+            res.json(gData);
         })
         .catch(err => {
-            res.json({error: err.message})
+            res.json({error: err.stack})
         })
 };
 
 const extData = () => {
     return new Promise((resolve, reject) => {
+        console.log('Requesting external data');
         request({
-            url: 'https://api.github.com/users/rajatady/repos?per_page=10',
+            url: 'https://api.github.com/users/Crizstian/repos?per_page=10',
             headers: {
                 'User-Agent': 'request'
             }
