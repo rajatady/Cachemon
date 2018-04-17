@@ -60,7 +60,7 @@ export default class CacheMonClient extends EventEmitter {
 
     /**
      *
-     * @constructor Create a Cachemon client
+     * Create a Cachemon client
      * @param {Object} options  The options for the Cachemon Client
      * @param {String}  options.name The name of the client for which resources have to be scoped
      * @param {String} [options.allowFiltering] Whether the domain should allow data filtering (Planned)

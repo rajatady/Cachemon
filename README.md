@@ -9,9 +9,40 @@
 
 <dl>
 <dt><a href="#CacheMonClient">CacheMonClient</a> ⇐ <code>EventEmitter</code></dt>
-<dd></dd>
-<dt><a href="#Create a Cachemon client">Create a Cachemon client</a></dt>
-<dd></dd>
+<dd><p>const cnrCache = new CacheMonClient({
+        name: &#39;DATA&#39;,
+        executeCronJob: false,
+        cronPeriod: &#39;0 <em> </em> <em> </em> *&#39;,
+        cronExecutorFn: (done) =&gt; {
+            i++;
+            console.log(&#39;Running&#39;);
+            request({
+                url: &#39;<a href="https://api.github.com/users/rajatady/repos?per_page=10&#39;">https://api.github.com/users/rajatady/repos?per_page=10&#39;</a>,
+                headers: {
+                    &#39;User-Agent&#39;: &#39;request&#39;
+                }
+            }, (err, response, body) =&gt; {
+                if (err) {
+                    done();
+                } else {
+                    cnrCache.updateResourcePool(body)
+                        .then(res =&gt; {
+                            console.log(&#39;Done&#39;);
+                        })
+                        .catch(err =&gt; {
+                            console.log(err);
+                        })
+                }
+            });
+        },
+        requestMethod: &#39;GET&#39;,
+        urlDomain: &#39;/data&#39;
+    });</p>
+<p> cnrCache.on(&#39;updated&#39;, (data) =&gt; {
+        console.log(&#39;Updated&#39;);
+    });</p>
+<p> export default resource(cnrCache);</p>
+</dd>
 </dl>
 
 ## Constants
@@ -127,27 +158,45 @@
 <a name="CacheMonClient"></a>
 
 ## CacheMonClient ⇐ <code>EventEmitter</code>
+const cnrCache = new CacheMonClient({
+        name: 'DATA',
+        executeCronJob: false,
+        cronPeriod: '0 * * * * *',
+        cronExecutorFn: (done) => {
+            i++;
+            console.log('Running');
+            request({
+                url: 'https://api.github.com/users/rajatady/repos?per_page=10',
+                headers: {
+                    'User-Agent': 'request'
+                }
+            }, (err, response, body) => {
+                if (err) {
+                    done();
+                } else {
+                    cnrCache.updateResourcePool(body)
+                        .then(res => {
+                            console.log('Done');
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        })
+                }
+            });
+        },
+        requestMethod: 'GET',
+        urlDomain: '/data'
+    });
+
+
+ cnrCache.on('updated', (data) => {
+        console.log('Updated');
+    });
+
+ export default resource(cnrCache);
+
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-<a name="Create a Cachemon client"></a>
-
-## Create a Cachemon client
-**Kind**: global class  
-<a name="new_Create a Cachemon client_new"></a>
-
-### new Create a Cachemon client(options)
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| options | <code>Object</code> |  | The options for the Cachemon Client |
-| options.name | <code>String</code> |  | The name of the client for which resources have to be scoped |
-| [options.allowFiltering] | <code>String</code> |  | Whether the domain should allow data filtering (Planned) |
-| options.urlDomain | <code>String</code> |  | The url domain registered with express. To be used for advanced caching (Planned) |
-| [options.requestMethod] | <code>String</code> | <code>GET</code> | The HTTP request method for the url domain (Planned) |
-| [options.cronPeriod] | <code>String</code> |  | The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more |
-| [options.executeCronJob] | <code>Boolean</code> |  | Should the cron function be executed |
-| [options.cronExecutorFn] | <code>function</code> |  | The function to be executed whenever the cron job runs |
-
 <a name="setData"></a>
 
 ## setData(key, value) ⇒ <code>Promise.&lt;any&gt;</code>
