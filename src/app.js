@@ -1,10 +1,31 @@
 import * as redis from 'redis';
 import bluebird from 'bluebird';
-// import cacheMonClient from "./client";
+import Client from "./client";
 let cacheMonClient;
+import crypto from 'crypto';
+import _ from 'lodash';
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
+
+
+export const getClient = (options) => {
+    return new Client(options, cacheMonClient);
+};
+
+export const hasKey = (key) => {
+    return new Promise((resolve, reject) => {
+        cacheMonClient.keysAsync('*')
+            .then(keys => {
+                let hashedKey = generateHash(key);
+                resolve(_.findIndex(keys, o => o === hashedKey) !== -1);
+            })
+            .catch(err => {
+                console.warn('Error while finding keys:', err);
+                reject()
+            })
+    })
+};
 
 export const initialize = (config) => {
     return new Promise((resolve, reject) => {
@@ -12,7 +33,6 @@ export const initialize = (config) => {
         let _client = cacheMonClient = redis.createClient(config);
         _client.on('connect', () => {
             console.log('Redis client connected');
-            resolve(_client);
         });
 
         _client.on('error', (err) => {
@@ -21,27 +41,42 @@ export const initialize = (config) => {
     });
 };
 
+export const set = (req, value) => {
+    let hashedKey = generateHash(req.url);
+    console.log('Setting VALUE', hashedKey);
+    return cacheMonClient.setAsync(hashedKey, value)
+};
 
-export const test = () => {
-    try {
-        cacheMonClient.setAsync('my test key', 'my test value1')
-            .then(res => console.log(res));
+
+export const get = (req) => {
+    let hashedKey = generateHash(req.url);
+    return cacheMonClient.getAsync(hashedKey)
+};
 
 
-        cacheMonClient.getAsync('my test key')
-            .then(result => {
-                console.log('GET result -> ' + result);
-            })
-            .catch(error => {
-                console.log(error);
-                throw error;
-            });
+export const cachedRouteMiddleware = (req, res, next) => {
+    hasKey(req.url)
+        .then((isPresent) => {
+            if (isPresent) {
+                get(req)
+                    .then(result => {
+                        console.log('Serving from cache');
+                        res.json(JSON.parse(result))
+                    })
+                    .catch(err => {
+                        console.log('Error from cache : ', req.url);
+                        next(err)
+                    })
+            } else {
+                next();
+            }
+        })
+        .catch(err => next())
+};
 
-        cacheMonClient.hset(["hash key", "hashtest", "some other value"]);
-    } catch (e) {
-        console.log(e);
-    }
 
+const generateHash = (str) => {
+    return crypto.createHash('md5').update(str).digest('hex')
 };
 
 
