@@ -10,44 +10,7 @@ bluebird.promisifyAll(redis.Multi.prototype);
 /**
  * @class CacheMonClient
  * @extends EventEmitter
- * @example
- * const cnrCache = new CacheMonClient({
-        name: 'DATA',
-        executeCronJob: false,
-        cronPeriod: '0 * * * * *',
-        cronExecutorFn: (done) => {
-            i++;
-            console.log('Running');
-            request({
-                url: 'https://api.github.com/users/rajatady/repos?per_page=10',
-                headers: {
-                    'User-Agent': 'request'
-                }
-            }, (err, response, body) => {
-                if (err) {
-                    done();
-                } else {
-                    cnrCache.updateResourcePool(body)
-                        .then(res => {
-                            console.log('Done');
-                        })
-                        .catch(err => {
-                            console.log(err);
-                        })
-                }
-            });
-        },
-        requestMethod: 'GET',
-        urlDomain: '/data'
-    });
-
-
- cnrCache.on('updated', (data) => {
-        console.log('Updated');
-    });
-
- export default resource(cnrCache);
- */
+ **/
 export default class CacheMonClient extends EventEmitter {
     _instance;
     name;

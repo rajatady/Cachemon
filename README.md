@@ -9,40 +9,7 @@
 
 <dl>
 <dt><a href="#CacheMonClient">CacheMonClient</a> ⇐ <code>EventEmitter</code></dt>
-<dd><p>const cnrCache = new CacheMonClient({
-        name: &#39;DATA&#39;,
-        executeCronJob: false,
-        cronPeriod: &#39;0 <em> </em> <em> </em> *&#39;,
-        cronExecutorFn: (done) =&gt; {
-            i++;
-            console.log(&#39;Running&#39;);
-            request({
-                url: &#39;<a href="https://api.github.com/users/rajatady/repos?per_page=10&#39;">https://api.github.com/users/rajatady/repos?per_page=10&#39;</a>,
-                headers: {
-                    &#39;User-Agent&#39;: &#39;request&#39;
-                }
-            }, (err, response, body) =&gt; {
-                if (err) {
-                    done();
-                } else {
-                    cnrCache.updateResourcePool(body)
-                        .then(res =&gt; {
-                            console.log(&#39;Done&#39;);
-                        })
-                        .catch(err =&gt; {
-                            console.log(err);
-                        })
-                }
-            });
-        },
-        requestMethod: &#39;GET&#39;,
-        urlDomain: &#39;/data&#39;
-    });</p>
-<p> cnrCache.on(&#39;updated&#39;, (data) =&gt; {
-        console.log(&#39;Updated&#39;);
-    });</p>
-<p> export default resource(cnrCache);</p>
-</dd>
+<dd></dd>
 </dl>
 
 ## Constants
@@ -117,6 +84,45 @@
 | --- |
 | clientConfig | 
 
+**Example**  
+```js
+const cnrCache = new CacheMonClient({
+        name: 'DATA',
+        executeCronJob: false,
+        cronPeriod: '0 * * * * *',
+        cronExecutorFn: (done) => {
+            i++;
+            console.log('Running');
+            request({
+                url: 'https://api.github.com/users/rajatady/repos?per_page=10',
+                headers: {
+                    'User-Agent': 'request'
+                }
+            }, (err, response, body) => {
+                if (err) {
+                    done();
+                } else {
+                    cnrCache.updateResourcePool(body)
+                        .then(res => {
+                            console.log('Done');
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        })
+                }
+            });
+        },
+        requestMethod: 'GET',
+        urlDomain: '/data'
+    });
+
+
+ cnrCache.on('updated', (data) => {
+        console.log('Updated');
+    });
+
+ export default resource(cnrCache);
+```
 <a name="exp_module_Cachemon--exports.hasKey"></a>
 
 ### exports.hasKey ⇒ ⏏
@@ -158,43 +164,6 @@
 <a name="CacheMonClient"></a>
 
 ## CacheMonClient ⇐ <code>EventEmitter</code>
-const cnrCache = new CacheMonClient({
-        name: 'DATA',
-        executeCronJob: false,
-        cronPeriod: '0 * * * * *',
-        cronExecutorFn: (done) => {
-            i++;
-            console.log('Running');
-            request({
-                url: 'https://api.github.com/users/rajatady/repos?per_page=10',
-                headers: {
-                    'User-Agent': 'request'
-                }
-            }, (err, response, body) => {
-                if (err) {
-                    done();
-                } else {
-                    cnrCache.updateResourcePool(body)
-                        .then(res => {
-                            console.log('Done');
-                        })
-                        .catch(err => {
-                            console.log(err);
-                        })
-                }
-            });
-        },
-        requestMethod: 'GET',
-        urlDomain: '/data'
-    });
-
-
- cnrCache.on('updated', (data) => {
-        console.log('Updated');
-    });
-
- export default resource(cnrCache);
-
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
 <a name="setData"></a>
