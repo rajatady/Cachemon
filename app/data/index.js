@@ -8,6 +8,7 @@ const router = new Router();
 
 const handler = (req, res) => {
     let gData;
+    console.log('as')
     CNRCacheModel.getResourcePool()
         .then(data => {
             if (data) {

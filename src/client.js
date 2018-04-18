@@ -20,6 +20,9 @@ export default class CacheMonClient extends EventEmitter {
     _hasCronJob;
     cronPeriod;
     cronExecutorFn;
+    updaterFn;
+    shouldRunUpdater;
+    metaKey;
 
     /**
      *
@@ -27,11 +30,14 @@ export default class CacheMonClient extends EventEmitter {
      * @param {Object} options  The options for the Cachemon Client
      * @param {String}  options.name The name of the client for which resources have to be scoped
      * @param {String} [options.allowFiltering] Whether the domain should allow data filtering (Planned)
-     * @param {String} options.urlDomain The url domain registered with express. To be used for advanced caching (Planned)
+     * @param {String} [options.urlDomain] The url domain registered with express. To be used for advanced caching (Planned)
      * @param {String} [options.requestMethod=GET] The HTTP request method for the url domain (Planned)
      * @param {String} [options.cronPeriod] The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
      * @param {Boolean} [options.executeCronJob] Should the cron function be executed
      * @param {Function} [options.cronExecutorFn] The function to be executed whenever the cron job runs
+     * @param {Function} [options.updaterFn] The function to be executed whenever request is served from cache
+     * @param {Boolean} [options.shouldRunUpdater=false] Should the updater function run
+     * @param {Boolean} [options.maintainUrls=false] Should a new data pool be created based on request url
      */
     constructor(options) {
         super();
@@ -48,8 +54,6 @@ export default class CacheMonClient extends EventEmitter {
 
         if (options.urlDomain) {
             this.urlDomain = options.urlDomain;
-        } else {
-            throw new Error('A urlDomain is required to configure Cachemon policy')
         }
 
         if (options.requestMethod &&
@@ -81,6 +85,15 @@ export default class CacheMonClient extends EventEmitter {
             this.cronExecutorFn = options.cronExecutorFn;
         }
 
+        if (options.updaterFn) {
+            this.updaterFn = options.updaterFn.bind(this);
+        }
+
+        this.shouldRunUpdater = options.shouldRunUpdater;
+
+        this.metaKey = this.name + '-META';
+
+        this.maintainUrls = options.maintainUrls;
 
         if (this._hasCronJob) {
             this.runCronJob();
@@ -128,9 +141,26 @@ export default class CacheMonClient extends EventEmitter {
      */
     setResourcePool(resourcePoolData) {
         return new Promise((resolve, reject) => {
-            this._instance.setAsync(this.name, resourcePoolData)
+            this._saveData(resourcePoolData)
                 .then(result => resolve(resourcePoolData))
                 .catch(err => reject(err))
+        })
+    }
+
+    /**
+     *
+     * @private
+     */
+    _saveData(resourcePoolData) {
+        return new Promise((resolve, reject) => {
+            this._instance.setAsync(this.name, resourcePoolData)
+                .then(res => {
+                    return this.saveMeta('lastResourceUpdate', new Date())
+                })
+                .then(result => {
+                    resolve(result);
+                })
+                .catch(err => reject(err));
         })
     }
 
@@ -139,7 +169,12 @@ export default class CacheMonClient extends EventEmitter {
      * @returns {Promise<any>}
      */
     getResourcePool() {
-        return this._instance.getAsync(this.name);
+        return new Promise((resolve, reject) => {
+            this._instance.getAsync(this.name)
+                .then(res => resolve(res))
+                .catch(err => reject(err));
+
+        })
     }
 
     /**
@@ -203,6 +238,31 @@ export default class CacheMonClient extends EventEmitter {
         cron.schedule(this.cronPeriod, this.cronExecutorFn, true);
     }
 
+    /**
+     *
+     * @return {Promise<any>}
+     * @param key
+     * @param value
+     */
+    saveMeta(key, value) {
+        return new Promise((resolve, reject) => {
+            this._instance.getAsync(this.metaKey)
+                .then(data => {
+                    if (!data) {
+                        data = {};
+                    } else {
+                        data = JSON.parse(data);
+                    }
+                    data[key] = value;
+                    this._instance.setAsync(this.metaKey, JSON.stringify(data))
+                })
+                .then(result => {
+                    resolve(result);
+                })
+                .catch(err => reject(err));
+        });
+    }
+
 
     /**
      *
@@ -226,6 +286,13 @@ export default class CacheMonClient extends EventEmitter {
                 })
                 .catch(err => reject(err));
         })
+    }
+
+    /**
+     * @description Manually run the updater function
+     */
+    runUdaterFunction() {
+        this.updaterFn();
     }
 }
 

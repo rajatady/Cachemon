@@ -86,7 +86,11 @@ export const initialize = (config) => {
  export default resource(cnrCache);
  */
 export const resource = (clientConfig) => {
-    config.push(clientConfig);
+    if (cacheMonClient) {
+        clientConfig.client = cacheMonClient;
+    } else {
+        config.push(clientConfig);
+    }
     return clientConfig;
 };
 
@@ -130,9 +134,18 @@ export const hasKey = (url, cacheModel) => {
  * @returns {Function}
  */
 export const cacheMiddleware = (cacheModel) => (req, res, next) => {
-    cacheModel.getData(generateHash(req.url))
+    let promise;
+    if (cacheModel.maintainUrls) {
+        promise = cacheModel.getData(generateHash(req.url))
+    } else {
+        promise = cacheModel.getResourcePool();
+    }
+    promise
         .then((data) => {
             if (data) {
+                if (cacheModel.shouldRunUpdater) {
+                    cacheModel.updaterFn();
+                }
                 console.log('Serving from cache');
                 res.json(JSON.parse(data))
             } else {

@@ -50,8 +50,13 @@
 <dd></dd>
 <dt><a href="#runCronJob">runCronJob()</a></dt>
 <dd></dd>
+<dt><a href="#saveMeta">saveMeta(key, value)</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
+<dd></dd>
 <dt><a href="#invalidateResourcePool">invalidateResourcePool()</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
 <dd></dd>
+<dt><a href="#runUdaterFunction">runUdaterFunction()</a></dt>
+<dd><p>Manually run the updater function</p>
+</dd>
 </dl>
 
 <a name="module_Cachemon"></a>
@@ -228,7 +233,23 @@ Get the data from the resource pool
 
 ## runCronJob()
 **Kind**: global function  
+<a name="saveMeta"></a>
+
+## saveMeta(key, value) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: global function  
+
+| Param |
+| --- |
+| key | 
+| value | 
+
 <a name="invalidateResourcePool"></a>
 
 ## invalidateResourcePool() ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: global function  
+<a name="runUdaterFunction"></a>
+
+## runUdaterFunction()
+Manually run the updater function
+
 **Kind**: global function  
