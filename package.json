@@ -1,6 +1,6 @@
 {
   "name": "cachemon",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A utiltiy for implementing redis based data caching and querying",
   "main": "dist/app.js",
   "scripts": {

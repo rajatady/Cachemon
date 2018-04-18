@@ -240,6 +240,7 @@ export default class CacheMonClient extends EventEmitter {
 
     /**
      *
+     * @description Set the meta info in the cache
      * @return {Promise<any>}
      * @param key
      * @param value
@@ -261,6 +262,14 @@ export default class CacheMonClient extends EventEmitter {
                 })
                 .catch(err => reject(err));
         });
+    }
+
+    /**
+     * @description Get the meta info saved in the cache
+     * @returns {Promise<any>}
+     */
+    getMeta() {
+        return this._instance.getAsync(this.metaKey);
     }
 
 
