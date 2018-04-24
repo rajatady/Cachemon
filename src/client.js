@@ -155,10 +155,10 @@ export default class CacheMonClient extends EventEmitter {
         return new Promise((resolve, reject) => {
             this._instance.setAsync(this.name, resourcePoolData)
                 .then(res => {
-                    return this.saveMeta('lastResourceUpdate', new Date())
-                })
-                .then(result => {
-                    resolve(result);
+                //     return this.saveMeta('lastResourceUpdate', new Date())
+                // })
+                // .then(result => {
+                    resolve(res);
                 })
                 .catch(err => reject(err));
         })
