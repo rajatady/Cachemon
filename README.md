@@ -46,12 +46,16 @@
 </dd>
 <dt><a href="#appendToResourcePool">appendToResourcePool(appendData)</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
 <dd></dd>
-<dt><a href="#updateResourcePool">updateResourcePool(updateData)</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
+<dt><a href="#updateResourcePool">updateResourcePool(updateData, preventEmit)</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
 <dd></dd>
 <dt><a href="#runCronJob">runCronJob()</a></dt>
 <dd></dd>
 <dt><a href="#saveMeta">saveMeta(key, value)</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
-<dd></dd>
+<dd><p>Set the meta info in the cache</p>
+</dd>
+<dt><a href="#getMeta">getMeta()</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
+<dd><p>Get the meta info saved in the cache</p>
+</dd>
 <dt><a href="#invalidateResourcePool">invalidateResourcePool()</a> ⇒ <code>Promise.&lt;any&gt;</code></dt>
 <dd></dd>
 <dt><a href="#runUdaterFunction">runUdaterFunction()</a></dt>
@@ -171,6 +175,28 @@ const cnrCache = new CacheMonClient({
 ## CacheMonClient ⇐ <code>EventEmitter</code>
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
+<a name="new_CacheMonClient_new"></a>
+
+### new CacheMonClient(options)
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| options | <code>Object</code> |  | The options for the Cachemon Client |
+| options.name | <code>String</code> |  | The name of the client for which resources have to be scoped |
+| [options.allowFiltering] | <code>String</code> |  | Whether the domain should allow data filtering (Planned) |
+| [options.urlDomain] | <code>String</code> |  | The url domain registered with express. To be used for advanced caching (Planned) |
+| [options.requestMethod] | <code>String</code> | <code>GET</code> | The HTTP request method for the url domain (Planned) |
+| [options.cronPeriod] | <code>String</code> |  | The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more |
+| [options.purgeCronPeriod] | <code>String</code> |  | The cron period for the purge function in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more |
+| [options.executeCronJob] | <code>Boolean</code> |  | Should the cron function be executed |
+| [options.cronExecutorFn] | <code>function</code> |  | The function to be executed whenever the cron job runs |
+| [options.updaterFn] | <code>function</code> |  | The function to be executed whenever request is served from cache |
+| [options.purgeFn] | <code>function</code> |  | The function to be executed whenever cron time for purge is reached |
+| [options.shouldRunUpdater] | <code>Boolean</code> | <code>false</code> | Should the updater function run |
+| [options.shouldRunPurge] | <code>Boolean</code> | <code>false</code> | Should the purge function run |
+| [options.maintainUrls] | <code>Boolean</code> | <code>false</code> | Should a new data pool be created based on request url |
+| [options.preSendCallback] | <code>function</code> |  | The function which gets the control once the data from cache is evaluated and is ready to be sent |
+
 <a name="setData"></a>
 
 ## setData(key, value) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -222,12 +248,13 @@ Get the data from the resource pool
 
 <a name="updateResourcePool"></a>
 
-## updateResourcePool(updateData) ⇒ <code>Promise.&lt;any&gt;</code>
+## updateResourcePool(updateData, preventEmit) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: global function  
 
-| Param |
-| --- |
-| updateData | 
+| Param | Type |
+| --- | --- |
+| updateData |  | 
+| preventEmit | <code>Boolean</code> | 
 
 <a name="runCronJob"></a>
 
@@ -236,6 +263,8 @@ Get the data from the resource pool
 <a name="saveMeta"></a>
 
 ## saveMeta(key, value) ⇒ <code>Promise.&lt;any&gt;</code>
+Set the meta info in the cache
+
 **Kind**: global function  
 
 | Param |
@@ -243,6 +272,12 @@ Get the data from the resource pool
 | key | 
 | value | 
 
+<a name="getMeta"></a>
+
+## getMeta() ⇒ <code>Promise.&lt;any&gt;</code>
+Get the meta info saved in the cache
+
+**Kind**: global function  
 <a name="invalidateResourcePool"></a>
 
 ## invalidateResourcePool() ⇒ <code>Promise.&lt;any&gt;</code>

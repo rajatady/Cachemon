@@ -10,6 +10,21 @@ bluebird.promisifyAll(redis.Multi.prototype);
 /**
  * @class CacheMonClient
  * @extends EventEmitter
+ * @param {Object} options  The options for the Cachemon Client
+ * @param {String}  options.name The name of the client for which resources have to be scoped
+ * @param {String} [options.allowFiltering] Whether the domain should allow data filtering (Planned)
+ * @param {String} [options.urlDomain] The url domain registered with express. To be used for advanced caching (Planned)
+ * @param {String} [options.requestMethod=GET] The HTTP request method for the url domain (Planned)
+ * @param {String} [options.cronPeriod] The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
+ * @param {String} [options.purgeCronPeriod] The cron period for the purge function in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
+ * @param {Boolean} [options.executeCronJob] Should the cron function be executed
+ * @param {Function} [options.cronExecutorFn] The function to be executed whenever the cron job runs
+ * @param {Function} [options.updaterFn] The function to be executed whenever request is served from cache
+ * @param {Function} [options.purgeFn] The function to be executed whenever cron time for purge is reached
+ * @param {Boolean} [options.shouldRunUpdater=false] Should the updater function run
+ * @param {Boolean} [options.shouldRunPurge=false] Should the purge function run
+ * @param {Boolean} [options.maintainUrls=false] Should a new data pool be created based on request url
+ * @param {Function} [options.preSendCallback] The function which gets the control once the data from cache is evaluated and is ready to be sent
  **/
 export default class CacheMonClient extends EventEmitter {
     _instance;
@@ -31,21 +46,6 @@ export default class CacheMonClient extends EventEmitter {
     /**
      *
      * Create a Cachemon client
-     * @param {Object} options  The options for the Cachemon Client
-     * @param {String}  options.name The name of the client for which resources have to be scoped
-     * @param {String} [options.allowFiltering] Whether the domain should allow data filtering (Planned)
-     * @param {String} [options.urlDomain] The url domain registered with express. To be used for advanced caching (Planned)
-     * @param {String} [options.requestMethod=GET] The HTTP request method for the url domain (Planned)
-     * @param {String} [options.cronPeriod] The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
-     * @param {String} [options.purgeCronPeriod] The cron period for the purge function in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
-     * @param {Boolean} [options.executeCronJob] Should the cron function be executed
-     * @param {Function} [options.cronExecutorFn] The function to be executed whenever the cron job runs
-     * @param {Function} [options.updaterFn] The function to be executed whenever request is served from cache
-     * @param {Function} [options.purgeFn] The function to be executed whenever cron time for purge is reached
-     * @param {Boolean} [options.shouldRunUpdater=false] Should the updater function run
-     * @param {Boolean} [options.shouldRunPurge=false] Should the purge function run
-     * @param {Boolean} [options.maintainUrls=false] Should a new data pool be created based on request url
-     * @param {Function} [options.preSendCallback] The function which gets the control once the data from cache is evaluated and is ready to be sent
      */
     constructor(options) {
         super();
