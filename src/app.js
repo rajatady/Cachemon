@@ -146,8 +146,13 @@ export const cacheMiddleware = (cacheModel) => (req, res, next) => {
                 if (cacheModel.shouldRunUpdater) {
                     cacheModel.updaterFn();
                 }
-                console.log('Serving from cache');
-                res.json(JSON.parse(data))
+                if (cacheModel.preSendCallback) {
+                    cacheModel.preSendCallback(req, res, next, data)
+                } else {
+                    console.log('Serving from cache');
+                    res.json(JSON.parse(data))
+                }
+
             } else {
                 next();
             }

@@ -1,6 +1,6 @@
 import * as redis from 'redis';
 import bluebird from 'bluebird';
-import cron from 'node-cron';
+import cron from 'cron';
 import crypto from "crypto";
 import EventEmitter from 'events';
 
@@ -23,6 +23,10 @@ export default class CacheMonClient extends EventEmitter {
     updaterFn;
     shouldRunUpdater;
     metaKey;
+    purgeCronPeriod;
+    shouldRunPurge;
+    purgeFn;
+    preSendCallback;
 
     /**
      *
@@ -33,11 +37,15 @@ export default class CacheMonClient extends EventEmitter {
      * @param {String} [options.urlDomain] The url domain registered with express. To be used for advanced caching (Planned)
      * @param {String} [options.requestMethod=GET] The HTTP request method for the url domain (Planned)
      * @param {String} [options.cronPeriod] The cron period in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
+     * @param {String} [options.purgeCronPeriod] The cron period for the purge function in a standard glob format. Refer to https://www.npmjs.com/package/node-cron for more
      * @param {Boolean} [options.executeCronJob] Should the cron function be executed
      * @param {Function} [options.cronExecutorFn] The function to be executed whenever the cron job runs
      * @param {Function} [options.updaterFn] The function to be executed whenever request is served from cache
+     * @param {Function} [options.purgeFn] The function to be executed whenever cron time for purge is reached
      * @param {Boolean} [options.shouldRunUpdater=false] Should the updater function run
+     * @param {Boolean} [options.shouldRunPurge=false] Should the purge function run
      * @param {Boolean} [options.maintainUrls=false] Should a new data pool be created based on request url
+     * @param {Function} [options.preSendCallback] The function which gets the control once the data from cache is evaluated and is ready to be sent
      */
     constructor(options) {
         super();
@@ -74,7 +82,7 @@ export default class CacheMonClient extends EventEmitter {
         }
 
 
-        if (this._hasCronJob && !cron.validate(this.cronPeriod)) {
+        if (this._hasCronJob && !this._validateCronPeriod(this.cronPeriod)) {
             throw new Error('The cron period format is not correct. \n' +
                 'Please refer to https://www.npmjs.com/package/node-cron for more info about the valid formats')
         }
@@ -83,6 +91,18 @@ export default class CacheMonClient extends EventEmitter {
             throw new Error('A valid function to be executed set a `cronExecutorFn` in the options object is required')
         } else if (this._hasCronJob && options.cronPeriod && options.cronExecutorFn) {
             this.cronExecutorFn = options.cronExecutorFn;
+        }
+
+        this.shouldRunPurge = options.shouldRunPurge;
+        this.purgeCronPeriod = options.purgeCronPeriod;
+
+        if (this.shouldRunPurge && !this._validateCronPeriod(this.purgeCronPeriod)) {
+            throw new Error('The cron period format for the purge function is not correct. \n' +
+                'Please refer to https://www.npmjs.com/package/node-cron for more info about the valid formats')
+        } else if (this.shouldRunPurge && !options.purgeFn) {
+            throw new Error('A valid purge function to be executed set a `purgeFn` in the options object is required')
+        } else if (this.shouldRunPurge && options.purgeFn && this._validateCronPeriod(this.purgeCronPeriod)) {
+            this.purgeFn = options.purgeFn.bind(this);
         }
 
         if (options.updaterFn) {
@@ -95,8 +115,16 @@ export default class CacheMonClient extends EventEmitter {
 
         this.maintainUrls = options.maintainUrls;
 
+        if (options.preSendCallback) {
+            this.preSendCallback = options.preSendCallback;
+        }
+
         if (this._hasCronJob) {
             this.runCronJob();
+        }
+
+        if (this.shouldRunPurge) {
+            this.runPurgeJob();
         }
     }
 
@@ -155,9 +183,9 @@ export default class CacheMonClient extends EventEmitter {
         return new Promise((resolve, reject) => {
             this._instance.setAsync(this.name, resourcePoolData)
                 .then(res => {
-                //     return this.saveMeta('lastResourceUpdate', new Date())
-                // })
-                // .then(result => {
+                    //     return this.saveMeta('lastResourceUpdate', new Date())
+                    // })
+                    // .then(result => {
                     resolve(res);
                 })
                 .catch(err => reject(err));
@@ -206,14 +234,17 @@ export default class CacheMonClient extends EventEmitter {
     /**
      *
      * @param updateData
+     * @param {Boolean} preventEmit
      * @returns {Promise<any>}
      */
-    updateResourcePool(updateData) {
+    updateResourcePool(updateData, preventEmit) {
         return new Promise((resolve, reject) => {
             this.invalidateResourcePool()
                 .then(res => this.setResourcePool(updateData))
                 .then(res => {
-                    this.emit('updated', res);
+                    if (!preventEmit) {
+                        this.emit('updated', res);
+                    }
                     resolve(res)
                 })
                 .catch(err => reject(err));
@@ -235,7 +266,36 @@ export default class CacheMonClient extends EventEmitter {
      */
     runCronJob() {
         console.log('Scheduling cron job for : ' + this.name);
-        cron.schedule(this.cronPeriod, this.cronExecutorFn, true);
+        new cron.CronJob({
+            cronTime: this.cronPeriod,
+            onTick: this.cronExecutorFn,
+            start: true,
+            context: this
+        });
+    }
+
+    runPurgeJob() {
+        console.log('Scheduling purge cron job for : ' + this.name);
+        new cron.CronJob({
+            cronTime: this.purgeCronPeriod,
+            onTick: this._createExtendedPurgeFn,
+            start: true,
+            context: this
+        });
+    }
+
+    /**
+     *
+     * @private
+     */
+    _createExtendedPurgeFn() {
+        this._instance.getAsync(this.name)
+            .then(data => this.purgeFn.call(this, data))
+            .then(newData => this.updateResourcePool(newData, true))
+            .catch(err => {
+                console.log('Error while executing the purge function');
+                console.error(err);
+            })
     }
 
     /**
@@ -303,5 +363,27 @@ export default class CacheMonClient extends EventEmitter {
     runUdaterFunction() {
         this.updaterFn();
     }
+
+
+    /**
+     *
+     * @param cronPeriod
+     * @private
+     */
+    _validateCronPeriod(cronPeriod) {
+        let job;
+        try {
+            job = new cron.CronJob(cronPeriod, function () {
+            });
+            job.stop();
+            return true;
+        } catch (ex) {
+            if (job)
+                job.stop();
+            return false;
+        }
+    }
+
+
 }
 

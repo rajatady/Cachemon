@@ -6,6 +6,13 @@ const cnrCache = new CacheMonClient({
     cronExecutor: () => {
 
     },
+    shouldRunPurge: false,
+    purgeFn: (data) => {
+        return new Promise((resolve, reject) => {
+            resolve(data);
+        })
+    },
+    purgeCronPeriod: '* * * * *',
     requestMethod: 'GET',
     urlDomain: '/test'
 });

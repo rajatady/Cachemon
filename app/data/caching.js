@@ -15,13 +15,13 @@ const updaterFunction = () => {
         if (err) {
             done();
         } else {
-             cnrCache.updateResourcePool(body)
+            cnrCache.updateResourcePool(body)
                 .then(res => {
                     return cnrCache.saveMeta('i', i);
                 })
-                 .then(res => {
-                     console.log('Done');
-                 })
+                .then(res => {
+                    console.log('Done');
+                })
                 .catch(err => {
                     console.log(err);
                 })
@@ -52,13 +52,18 @@ const executorFunction = (done) => {
     });
 };
 
+const preSendCallback = (req, res, next, data) => {
+    res.send({data: JSON.parse(data)});
+};
+
 const cnrCache = new CacheMonClient({
     name: 'DATA',
     executeCronJob: false,
     cronPeriod: '0 * * * * *',
     cronExecutorFn: executorFunction,
-    shouldRunUpdater: true,
+    shouldRunUpdater: false,
     updaterFn: updaterFunction,
+    preSendCallback: preSendCallback,
     requestMethod: 'GET',
     urlDomain: '/data'
 });
