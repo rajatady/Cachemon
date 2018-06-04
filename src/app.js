@@ -88,6 +88,7 @@ export const initialize = (config) => {
 export const resource = (clientConfig) => {
     if (cacheMonClient) {
         clientConfig.client = cacheMonClient;
+        clientConfig.emit('connect');
     } else {
         config.push(clientConfig);
     }
@@ -103,6 +104,7 @@ const _connectInstances = () => {
     console.log('Connecting instances');
     config.forEach(o => {
         o.client = cacheMonClient;
+        o.emit('connect');
     });
 };
 

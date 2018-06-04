@@ -105,6 +105,7 @@ export default class CacheMonClient extends EventEmitter {
             this.purgeFn = options.purgeFn.bind(this);
         }
 
+
         if (options.updaterFn) {
             this.updaterFn = options.updaterFn.bind(this);
         }

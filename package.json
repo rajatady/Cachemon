@@ -1,6 +1,6 @@
 {
   "name": "cachemon",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A utiltiy for implementing redis based data caching and querying",
   "homepage": "https://rajatady.github.io/Cachemon",
   "repository": {
